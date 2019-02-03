@@ -17,6 +17,8 @@
 package com.stfalcon.imageviewer.common.gestures.dismiss
 
 import android.annotation.SuppressLint
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateInterpolator
@@ -88,18 +90,25 @@ internal class SwipeToDismissHandler(
     }
 
     private fun animateTranslation(translationTo: Float, duration: Long) {
-        swipeView.animate()
+        val viewPropertyAnimator = swipeView.animate()
             .translationY(translationTo)
             .setDuration(duration)
             .setInterpolator(AccelerateInterpolator())
-            .setUpdateListener { onSwipeViewMove(swipeView.translationY, translationLimit) }
+
+        if (VERSION.SDK_INT >= VERSION_CODES.KITKAT) {
+            viewPropertyAnimator.setUpdateListener { onSwipeViewMove(swipeView.translationY, translationLimit) }
+        }
+
+        viewPropertyAnimator
             .setAnimatorListener(onAnimationEnd = {
                 if (translationTo != 0f) {
                     onDismiss()
                 }
 
                 //remove the update listener, otherwise it will be saved on the next animation execution:
-                swipeView.animate().setUpdateListener(null)
+                if (VERSION.SDK_INT >= VERSION_CODES.KITKAT) {
+                    swipeView.animate().setUpdateListener(null)
+                }
             })
             .start()
     }
